@@ -55,12 +55,14 @@ public class IPPane extends JPanel {
 
 		public void actionPerformed(ActionEvent e) {
 			StringBuffer sb = new StringBuffer();
+			sb.append("All Network Interfaces known to the system:\n");
+			sb.append("-------------------------------------------\n");
 			try {
 				//Get all the network interfaces
 				Enumeration<NetworkInterface> nwEnum = NetworkInterface.getNetworkInterfaces();
 				while (nwEnum.hasMoreElements()) {
 					NetworkInterface nw = nwEnum.nextElement();
-					sb.append("\nNetwork Interface: "+nw.getDisplayName()+"\n");
+					sb.append("\n"+nw.getDisplayName()+"\n");
 					Enumeration<InetAddress> ipEnum = nw.getInetAddresses();
 					while (ipEnum.hasMoreElements()) {
 						InetAddress ina = ipEnum.nextElement();
@@ -74,6 +76,7 @@ public class IPPane extends JPanel {
 				sb.append("Unable to obtain the IP addresses");
 			}
 			editor.setText(sb.toString());
+			editor.setCaretPosition(0);
 		}
 	}
 
