@@ -79,7 +79,7 @@ public class HttpTest extends JFrame implements ChangeListener {
 		pack();
 		Toolkit t = getToolkit();
 		Dimension scr = t.getScreenSize ();
-		setSize(scr.width*3/4, scr.height/2);
+		setSize(scr.width/2, scr.height/2);
 		setLocation (new Point ((scr.width-getSize().width)/2,(scr.height-getSize().height)/2));
 		setVisible(true);
 	}

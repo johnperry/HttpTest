@@ -12,6 +12,8 @@
 	<property name="libraries" value="${basedir}/libraries"/>
 	<property name="products" value="${basedir}/products"/>
 
+	<property name="description" value="Simple network test utility"/>
+
 	<target name="clean">
 		<delete dir="${build}" failonerror="false"/>
 	</target>
@@ -19,8 +21,8 @@
 	<target name="init">
 		<mkdir dir="${build}"/>
 		<tstamp>
-			<format property="today" pattern="dd-MMMM-yyyy"/>
-			<format property="now" pattern="HH:mm:ss"/>
+			<format property="today" pattern="yyyy-MM-dd"/>
+			<format property="now" pattern="HH:mm:ss z"/>
 		</tstamp>
 		<echo message="Time now ${now}"/>
 		<echo message="ant.java.version = ${ant.java.version}" />
@@ -39,7 +41,9 @@
 		<jar jarfile="${products}/HttpTest.jar">
 			<manifest>
 				<attribute name="Main-Class" value="org.rsna.httptest.HttpTest"/>
-				<attribute name="Implementation-Version" value="${today} @ ${now}"/>
+	            <attribute name="Date" value="${today} at ${now}"/>
+	            <attribute name="Java-Version" value="${ant.java.version}"/>
+	            <attribute name="Description" value="${description}"/>
 			</manifest>
 			<fileset dir="${build}" includes="${httptest}/** ${util}/**"/>
 			<fileset dir="${files}"/>

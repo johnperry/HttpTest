@@ -62,13 +62,13 @@ public class IPPane extends JPanel {
 				Enumeration<NetworkInterface> nwEnum = NetworkInterface.getNetworkInterfaces();
 				while (nwEnum.hasMoreElements()) {
 					NetworkInterface nw = nwEnum.nextElement();
-					sb.append("\n"+nw.getDisplayName()+"\n");
+					sb.append(nw.getDisplayName()+"\n");
 					Enumeration<InetAddress> ipEnum = nw.getInetAddresses();
 					while (ipEnum.hasMoreElements()) {
 						InetAddress ina = ipEnum.nextElement();
 						sb.append("    " + ina.getHostAddress() + "\n");
-						if (ina instanceof Inet4Address) sb.append("      - Inet4\n");
-						if (ina.isLoopbackAddress()) sb.append("      - loopback address\n");
+						if (ina instanceof Inet4Address) sb.append("        - Inet4\n");
+						if (ina.isLoopbackAddress()) sb.append("        - loopback address\n");
 					}
 				}
 			}
