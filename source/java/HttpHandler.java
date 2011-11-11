@@ -9,6 +9,7 @@ package org.rsna.httptest;
 
 import java.io.*;
 import java.net.*;
+import java.util.Calendar;
 import java.util.EventListener;
 import java.util.Hashtable;
 import javax.swing.event.*;
@@ -57,7 +58,7 @@ public class HttpHandler extends Thread {
 
 			//Make a report
 			StringBuffer sb = new StringBuffer();
-			sb.append("Connection received from "+remoteAddress+"\n");
+			sb.append("Connection received from "+remoteAddress+" at "+getDateTime()+"\n");
 			sb.append("Headers received by the server:\n");
 			sb.append(headers);
 			sb.append("Content received by the server:\n");
@@ -192,4 +193,27 @@ public class HttpHandler extends Thread {
 		return rsaString;
 	}
 
+	private static String getDateTime() {
+		Calendar now = Calendar.getInstance();
+		return intToString(now.get(Calendar.YEAR), 4)
+				 + "."
+				 + intToString(now.get(Calendar.MONTH) + 1, 2)
+				 + "."
+				 + intToString(now.get(Calendar.DAY_OF_MONTH), 2)
+				 + " "
+				 + intToString(now.get(Calendar.HOUR_OF_DAY), 2)
+				 + ":"
+				 + intToString(now.get(Calendar.MINUTE), 2)
+				 + ":"
+				 + intToString(now.get(Calendar.SECOND), 2)
+				 + "."
+				 + intToString(now.get(Calendar.MILLISECOND), 3);
+	}
+
+	private static String intToString(int theValue, int nDigits) {
+		String s = Integer.toString(theValue);
+		int k = nDigits - s.length();
+		for (int i=0; i<k; i++) s = "0" + s;
+		return s;
+	}
 }

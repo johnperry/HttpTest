@@ -61,6 +61,7 @@ public class HttpServer extends JPanel {
 			buttonSize = startStop.getPreferredSize();
 			startStop.addActionListener(this);
 			sendResponse = new JCheckBox("Send text response page");
+			sendResponse.setSelected(true);
 			running = false;
 
 			this.add(new JLabel("Port:"));
