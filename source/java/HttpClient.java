@@ -11,8 +11,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
-import java.security.SecureRandom;
+import java.nio.charset.Charset;
 import java.security.cert.X509Certificate;
+import java.security.SecureRandom;
 import java.util.*;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -21,6 +22,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.*;
+import org.rsna.ui.RowLayout;
 
 /**
  * A JPanel providing a user interface and communication software
@@ -34,11 +36,14 @@ import javax.swing.*;
  */
 public class HttpClient extends JPanel {
 
+	static Charset utf8 = Charset.forName("UTF-8");
+
 	Header header;
 	JScrollPane scroller;
 	ScrollableEditorPane editor;
 	Font font;
 	TrustManager[] trustAllCerts;
+	CookieManager cookieManager = null;
 
 	/**
 	 * Class constructor; provides the user interface and the actual
@@ -62,6 +67,8 @@ public class HttpClient extends JPanel {
 			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 		}
 		catch (Exception e) { }
+		cookieManager = new CookieManager();
+		CookieHandler.setDefault(cookieManager);
 	}
 
 	//Try to make a connection and display the results
@@ -90,7 +97,7 @@ public class HttpClient extends JPanel {
 				conn = (HttpURLConnection)url.openConnection();
 
 			//Get the method selected (GET vs POST)
-			String method = (String)header.getMethod();
+			String method = header.getMethod();
 			conn.setRequestMethod(method);
 
 			//If the proxy is enabled and authentication credentials are available,
@@ -107,13 +114,38 @@ public class HttpClient extends JPanel {
 					"Authorization","Basic "+Authorization.getEncodedCredentials());
 			}
 
+			boolean sendBody = false;
+			String body = "";
+			if (method.equals("POST")) {
+				body = header.getBody();
+				if (!body.equals("")) {
+					conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+					conn.setDoOutput(true);
+					sendBody = true;
+				}
+			}
+
 			//Make the connection
 			conn.connect();
+
+			//Send the body if required
+			if (sendBody) {
+				try {
+					BufferedWriter writer =
+						new BufferedWriter( new OutputStreamWriter( conn.getOutputStream(), utf8 ) );
+					writer.write(body);
+					writer.flush();
+					writer.close();
+				}
+				catch (Exception ignore) { }
+			}
 
 			//And display the results.
 			editor.setText(addr + "\nMethod: " + method + "\n"
 						+ "Response Code: " + conn.getResponseCode() + "\n"
 						+ displayConnectionHeaders(conn)
+						+ displayCookies(conn, url)
+						+ "\n----------------------------------------------------\n"
 						+ displayContent(conn));
 			editor.setCaretPosition(0);
 		}
@@ -137,7 +169,27 @@ public class HttpClient extends JPanel {
 				text += key + " = " + value + "\n";
 			}
 		}
-		return text + "\n----------------------------------------------------\n";
+		return text;
+	}
+
+	//Collect all the cookies from the CookieManager.
+	String displayCookies(HttpURLConnection conn, URL url) {
+		String text = "Unable to get cookies\n";
+		try {
+			URI uri = url.toURI();
+			Map<String,java.util.List<String>> cooks = cookieManager.get(uri, conn.getHeaderFields());
+			int n = cooks.size();
+			text = "Cookies [" + n + "]" + (n>0 ? ":\n" : "\n");
+			if (n > 0) {
+				String[] keys = new String[n];
+				keys = cooks.values().toArray(keys);
+				for (String key : keys) {
+					text += key + "\n";
+				}
+			}
+		}
+		catch (Exception ex) { }
+		return text;
 	}
 
 	//Get the text returned in the connection.
@@ -180,6 +232,7 @@ public class HttpClient extends JPanel {
 	//Class to provide the buttons and text selections
 	class Header extends JPanel implements ActionListener {
 		public JTextField address;
+		public JTextField body;
 		public JRadioButton getButton;
 		public JRadioButton postButton;
 		JButton connect;
@@ -189,9 +242,21 @@ public class HttpClient extends JPanel {
 			super();
 			this.setLayout(new FlowLayout(FlowLayout.LEADING));
 			group = new ButtonGroup();
-			address = new JTextField(50);
+
+			JPanel p = new JPanel(new RowLayout());
+			address = new JTextField(100);
 			address.addActionListener(this);
 			address.setFont(font);
+			p.add(new JLabel("URL:"));
+			p.add(address);
+			p.add(RowLayout.crlf());
+			body = new JTextField(100);
+			body.addActionListener(this);
+			body.setFont(font);
+			p.add(new JLabel("POST Body:"));
+			p.add(body);
+			p.add(RowLayout.crlf());
+
 			connect = new JButton("Connect");
 			connect.addActionListener(this);
 			getButton = new JRadioButton();
@@ -200,9 +265,7 @@ public class HttpClient extends JPanel {
 			group.add(getButton);
 			group.add(postButton);
 
-			this.add(new JLabel("URL:"));
-			this.add(Box.createHorizontalStrut(5));
-			this.add(address);
+			this.add(p);
 			this.add(Box.createHorizontalStrut(10));
 			this.add(connect);
 			this.add(Box.createHorizontalStrut(20));
@@ -217,6 +280,11 @@ public class HttpClient extends JPanel {
 		public String getMethod() {
 			if (postButton.isSelected()) return "POST";
 			else return "GET";
+		}
+
+		public String getBody() {
+			if (postButton.isSelected()) return body.getText().trim();
+			else return "";
 		}
 
 		public void actionPerformed(ActionEvent e) {
