@@ -96,7 +96,7 @@ public class HttpClient extends JPanel {
 				//This is a straight HTTP connection.
 				conn = (HttpURLConnection)url.openConnection();
 
-			//Get the method selected (GET vs POST)
+			//Get the method selected (GET/PUT/POST)
 			String method = header.getMethod();
 			conn.setRequestMethod(method);
 
@@ -124,6 +124,9 @@ public class HttpClient extends JPanel {
 					sendBody = true;
 				}
 			}
+
+			//Turn off redirects
+			conn.setFollowRedirects(false);
 
 			//Make the connection
 			conn.connect();
@@ -158,7 +161,8 @@ public class HttpClient extends JPanel {
 
 	//Collect all the headers returned.
 	String displayConnectionHeaders(HttpURLConnection conn) {
-		int n = conn.getHeaderFields().size();
+		Map<String,java.util.List<String>> headers = conn.getHeaderFields();
+		int n = headers.size();
 		String text = "Headers [" + n + "]" + (n>0 ? ":\n" : "\n");
 		String key;
 		String value;
@@ -234,6 +238,7 @@ public class HttpClient extends JPanel {
 		public JTextField address;
 		public JTextField body;
 		public JRadioButton getButton;
+		public JRadioButton putButton;
 		public JRadioButton postButton;
 		JButton connect;
 		ButtonGroup group;
@@ -261,8 +266,10 @@ public class HttpClient extends JPanel {
 			connect.addActionListener(this);
 			getButton = new JRadioButton();
 			getButton.setSelected(true);
+			putButton = new JRadioButton();
 			postButton = new JRadioButton();
 			group.add(getButton);
+			group.add(putButton);
 			group.add(postButton);
 
 			this.add(p);
@@ -273,12 +280,16 @@ public class HttpClient extends JPanel {
 			this.add(new JLabel("GET:"));
 			this.add(getButton);
 			this.add(Box.createHorizontalStrut(5));
+			this.add(new JLabel("PUT:"));
+			this.add(putButton);
+			this.add(Box.createHorizontalStrut(5));
 			this.add(new JLabel("POST:"));
 			this.add(postButton);
 		}
 
 		public String getMethod() {
-			if (postButton.isSelected()) return "POST";
+			if (putButton.isSelected()) return "PUT";
+			else if (postButton.isSelected()) return "POST";
 			else return "GET";
 		}
 
