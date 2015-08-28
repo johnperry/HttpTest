@@ -126,9 +126,13 @@ public class HttpHandler extends Thread {
 	//Get the content passed in the connection as a String.
 	private String getContent(BufferedInputStream is, Hashtable<String,String> headers) {
 		String contentLength = headers.get("content-length");
-		int count = 0;
-		try { count = Integer.parseInt(contentLength); }
-		catch (Exception ignore) { }
+		String encoding = headers.get("transfer-encoding");
+		boolean chunked = (encoding != null) && encoding.equals("chunked");
+		int count = 10000;
+		if (!chunked) {
+			try { count = Integer.parseInt(contentLength); }
+			catch (Exception ignore) { }
+		}
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		int b;
