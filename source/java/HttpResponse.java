@@ -43,7 +43,9 @@ public class HttpResponse {
 
 		try {
 			stream.write(headers.getBytes());
-			stream.write(response.toString().getBytes());
+			if (response.length() > 0) {
+				stream.write(response.toString().getBytes());
+			}
 		}
 		catch (Exception ex) {
 			System.out.println("Exception while writing the response\n"+ex);

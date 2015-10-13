@@ -131,8 +131,9 @@ public class HttpHandler extends Thread {
 		int count = 10000;
 		if (!chunked) {
 			try { count = Integer.parseInt(contentLength); }
-			catch (Exception ignore) { }
+			catch (Exception noContent) { count = 0; }
 		}
+		if (count <= 0) return "";
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		int b;
