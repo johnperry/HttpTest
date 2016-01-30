@@ -49,6 +49,7 @@ public class HttpTest extends JFrame implements ChangeListener {
 	 */
 	public HttpTest() {
 		setTitle(windowTitle);
+		System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
 		addWindowListener(new WindowAdapter() {
 				public void windowClosing(WindowEvent evt) { exitForm(evt); } });
 

@@ -55,7 +55,7 @@ public class HttpReceiver extends Thread implements HttpConnectionEventListener 
 	public void run() {
 		//Send a startup message
 		sendHttpConnectionEvent(
-			this,HttpConnectionEvent.STARTUP,"Server started; port open");
+			this,HttpConnectionEvent.STARTUP,"Server started; port "+port+" open");
 
 		//Accept connections and handle them
 		while (!this.isInterrupted()) {

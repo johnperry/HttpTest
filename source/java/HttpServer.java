@@ -48,59 +48,77 @@ public class HttpServer extends JPanel {
 		public JTextField port;
 		public JButton startStop;
 		public JCheckBox sendResponse;
+		public JButton clear;
 		boolean running = false;
 		Dimension buttonSize;
 		String defaultPort = "5678";
 
 		public Header() {
 			super();
-			this.setLayout(new FlowLayout(FlowLayout.LEADING));
+			this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+			this.setBorder(BorderFactory.createEmptyBorder(2,0,4,0));
 			port = new JTextField(defaultPort,6);
 			port.setFont(font);
+			Dimension portSize = port.getPreferredSize();
+			port.setMaximumSize(portSize);
 			startStop = new JButton("Start");
 			buttonSize = startStop.getPreferredSize();
 			startStop.addActionListener(this);
 			sendResponse = new JCheckBox("Send text response page");
 			sendResponse.setSelected(true);
+			clear = new JButton("Clear");
+			clear.addActionListener(this);
 			running = false;
 
+			this.add(Box.createHorizontalStrut(5));
 			this.add(new JLabel("Port:"));
-			this.add(Box.createHorizontalStrut(2));
+			this.add(Box.createHorizontalStrut(3));
 			this.add(port);
 			this.add(Box.createHorizontalStrut(10));
 			this.add(startStop);
 			this.add(Box.createHorizontalStrut(15));
 			this.add(sendResponse);
+			this.add(Box.createHorizontalGlue());
+			this.add(clear);
+			this.add(Box.createHorizontalStrut(5));
 		}
 
 		public void httpConnectionEventOccurred(HttpConnectionEvent event) {
-			editor.setText(event.message);
+			int len = editor.getDocument().getLength(); // same value as getText().length();
+			editor.setCaretPosition(len);  // place caret at the end (with no selection)
+			editor.replaceSelection(event.message); // there is no selection, so inserts at caret
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			if (!running) {
-				//Start the server
-				String portText = port.getText().trim();
-				try {
-					int portNumber = Integer.parseInt(portText);
-					httpReceiver = new HttpReceiver(portNumber,sendResponse.isSelected());
-					httpReceiver.addHttpConnectionEventListener(this);
-					httpReceiver.start();
-					startStop.setText("Stop");
-					startStop.setPreferredSize(buttonSize);
-					running = true;
+			Object source = e.getSource();
+			if (source.equals(startStop)) {
+				if (!running) {
+					//Start the server
+					String portText = port.getText().trim();
+					try {
+						int portNumber = Integer.parseInt(portText);
+						httpReceiver = new HttpReceiver(portNumber,sendResponse.isSelected());
+						httpReceiver.addHttpConnectionEventListener(this);
+						httpReceiver.start();
+						startStop.setText("Stop");
+						startStop.setPreferredSize(buttonSize);
+						running = true;
+					}
+					catch (Exception ex) {
+						HttpTest.message.setText("Unable to start the server");
+					}
 				}
-				catch (Exception ex) {
-					HttpTest.message.setText("Unable to start the server");
+				else {
+					//Stop the server
+					if (httpReceiver != null) httpReceiver.stopReceiver();
+					httpReceiver = null;
+					startStop.setText("Start");
+					startStop.setPreferredSize(buttonSize);
+					running = false;
 				}
 			}
-			else {
-				//Stop the server
-				if (httpReceiver != null) httpReceiver.stopReceiver();
-				httpReceiver = null;
-				startStop.setText("Start");
-				startStop.setPreferredSize(buttonSize);
-				running = false;
+			else if (source.equals(clear)) {
+				editor.setText("");
 			}
 		}
 	}

@@ -96,7 +96,7 @@ public class HttpClient extends JPanel {
 				//This is a straight HTTP connection.
 				conn = (HttpURLConnection)url.openConnection();
 
-			//Get the method selected (GET/PUT/POST)
+			//Get the method selected (GET/PUT/POST/OPTIONS)
 			String method = header.getMethod();
 			conn.setRequestMethod(method);
 
@@ -113,6 +113,11 @@ public class HttpClient extends JPanel {
 				conn.setRequestProperty(
 					"Authorization","Basic "+Authorization.getEncodedCredentials());
 			}
+			
+			//If gzip is checked, include the Accept-Encoding header.
+			if (header.gzip.isSelected()) {
+				conn.setRequestProperty("Accept-Encoding","gzip");
+			}
 
 			boolean sendBody = false;
 			String body = "";
@@ -124,7 +129,12 @@ public class HttpClient extends JPanel {
 					sendBody = true;
 				}
 			}
-
+			else if (method.equals("OPTIONS")) {
+				String origin = url.getProtocol().toLowerCase()+"://"+IPUtil.getIPAddress();
+				conn.setRequestProperty("Origin", origin);
+				conn.setRequestProperty("Access-Control-Request-Method", "POST, GET, OPTIONS");			
+			}
+			
 			//Turn off redirects
 			conn.setFollowRedirects(false);
 
@@ -237,9 +247,11 @@ public class HttpClient extends JPanel {
 	class Header extends JPanel implements ActionListener {
 		public JTextField address;
 		public JTextField body;
+		public JCheckBox gzip;
 		public JRadioButton getButton;
 		public JRadioButton putButton;
 		public JRadioButton postButton;
+		public JRadioButton optionsButton;
 		JButton connect;
 		ButtonGroup group;
 
@@ -250,6 +262,7 @@ public class HttpClient extends JPanel {
 
 			JPanel p = new JPanel(new RowLayout());
 			address = new JTextField(100);
+			address.setText("http://"+IPUtil.getIPAddress()+":5678");
 			address.addActionListener(this);
 			address.setFont(font);
 			p.add(new JLabel("URL:"));
@@ -261,6 +274,10 @@ public class HttpClient extends JPanel {
 			p.add(new JLabel("POST Body:"));
 			p.add(body);
 			p.add(RowLayout.crlf());
+			gzip = new JCheckBox("", false);
+			p.add(gzip);
+			p.add(new JLabel("Include gzip Accept-Encoding header"));
+			p.add(RowLayout.crlf());
 
 			connect = new JButton("Connect");
 			connect.addActionListener(this);
@@ -268,28 +285,37 @@ public class HttpClient extends JPanel {
 			getButton.setSelected(true);
 			putButton = new JRadioButton();
 			postButton = new JRadioButton();
+			optionsButton = new JRadioButton();
 			group.add(getButton);
 			group.add(putButton);
 			group.add(postButton);
+			group.add(optionsButton);
 
 			this.add(p);
 			this.add(Box.createHorizontalStrut(10));
 			this.add(connect);
 			this.add(Box.createHorizontalStrut(20));
 
-			this.add(new JLabel("GET:"));
-			this.add(getButton);
-			this.add(Box.createHorizontalStrut(5));
-			this.add(new JLabel("PUT:"));
-			this.add(putButton);
-			this.add(Box.createHorizontalStrut(5));
-			this.add(new JLabel("POST:"));
-			this.add(postButton);
+			JPanel methodPanel = new JPanel(new RowLayout());
+			methodPanel.add(new JLabel("GET:"));
+			methodPanel.add(getButton);
+			methodPanel.add(RowLayout.crlf());
+			methodPanel.add(new JLabel("PUT:"));
+			methodPanel.add(putButton);
+			methodPanel.add(RowLayout.crlf());
+			methodPanel.add(new JLabel("POST:"));
+			methodPanel.add(postButton);
+			methodPanel.add(RowLayout.crlf());
+			methodPanel.add(new JLabel("OPTIONS:"));
+			methodPanel.add(optionsButton);
+			methodPanel.add(RowLayout.crlf());
+			this.add(methodPanel);
 		}
 
 		public String getMethod() {
 			if (putButton.isSelected()) return "PUT";
 			else if (postButton.isSelected()) return "POST";
+			else if (optionsButton.isSelected()) return "OPTIONS";
 			else return "GET";
 		}
 

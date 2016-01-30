@@ -23,6 +23,7 @@ public class HttpHandler extends Thread {
 	Socket socket;
 	boolean sendResponse;
 	EventListenerList listenerList;
+	boolean optionsEnabled = true;
 
 	/**
 	 * Class constructor; creates a handler for one HTTP connection.
@@ -53,18 +54,36 @@ public class HttpHandler extends Thread {
 
 			//Get the data from the connection
 			Hashtable<String,String> headerHashtable = new Hashtable<String,String>();
-			String headers = getHeaders(inStream,headerHashtable);
-			String content = getContent(inStream,headerHashtable);
+			String headers = getHeaders(inStream, headerHashtable);
+			String content = getContent(inStream, headerHashtable);
+			
+			//See if we should set the OPTIONS request headers
+			String report = "";
+			if (optionsEnabled && headers.startsWith("OPTIONS ")) {
+				String originHeader = headerHashtable.get("origin");
+				if ((originHeader != null) && !originHeader.equals("null")) {
+					response.setHeader("Access-Control-Allow-Origin", originHeader);
+				}
+				String methodHeader = headerHashtable.get("access-control-request-method");
+				if (methodHeader != null) {
+					response.setHeader("Access-Control-Allow-Methods", methodHeader);
+				}
+				else {
+					response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+				}
+				String headersHeader = headerHashtable.get("access-control-request-headers");
+				if (headersHeader != null) response.setHeader("Access-Control-Allow-Headers", headersHeader);
+			}
 
-			//Make a report
+			//Send a normal request report
 			StringBuffer sb = new StringBuffer();
-			sb.append("Connection received from "+remoteAddress+" at "+getDateTime()+"\n");
+			sb.append("\nConnection received from "+remoteAddress+" at "+getDateTime()+"\n");
 			sb.append("Headers received by the server:\n");
 			sb.append(headers);
 			sb.append("Content received by the server:\n");
 			sb.append(content);
-			if (content.length() == 0) sb.append("[none]");
-			String report = sb.toString();
+			if (content.length() == 0) sb.append("[none]\n");
+			report = sb.toString();
 
 			//If enabled, send a response
 			if (sendResponse) {
