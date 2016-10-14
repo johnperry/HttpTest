@@ -29,7 +29,7 @@ import javax.swing.event.*;
  */
 public class HttpTest extends JFrame implements ChangeListener {
 
-	private String windowTitle = "MIRC HttpTest - version 4";
+	private String windowTitle = "MIRC HttpTest - version 5";
 
 	JTabbedPane tabbedPane;
 	JPanel main;

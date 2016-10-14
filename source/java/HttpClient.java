@@ -15,6 +15,7 @@ import java.nio.charset.Charset;
 import java.security.cert.X509Certificate;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.zip.*;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -36,7 +37,8 @@ import org.rsna.ui.RowLayout;
  */
 public class HttpClient extends JPanel {
 
-	static Charset utf8 = Charset.forName("UTF-8");
+	static final Charset utf8 = Charset.forName("UTF-8");
+	static final Charset latin1 = Charset.forName("ISO-8859-1");
 
 	Header header;
 	JScrollPane scroller;
@@ -44,6 +46,8 @@ public class HttpClient extends JPanel {
 	Font font;
 	TrustManager[] trustAllCerts;
 	CookieManager cookieManager = null;
+	Map<String,java.util.List<String>> headers = null;
+	Map<String,java.util.List<String>> cookies = null;
 
 	/**
 	 * Class constructor; provides the user interface and the actual
@@ -171,7 +175,7 @@ public class HttpClient extends JPanel {
 
 	//Collect all the headers returned.
 	String displayConnectionHeaders(HttpURLConnection conn) {
-		Map<String,java.util.List<String>> headers = conn.getHeaderFields();
+		headers = conn.getHeaderFields();
 		int n = headers.size();
 		String text = "Headers [" + n + "]" + (n>0 ? ":\n" : "\n");
 		String key;
@@ -191,12 +195,12 @@ public class HttpClient extends JPanel {
 		String text = "Unable to get cookies\n";
 		try {
 			URI uri = url.toURI();
-			Map<String,java.util.List<String>> cooks = cookieManager.get(uri, conn.getHeaderFields());
-			int n = cooks.size();
+			cookies = cookieManager.get(uri, conn.getHeaderFields());
+			int n = cookies.size();
 			text = "Cookies [" + n + "]" + (n>0 ? ":\n" : "\n");
 			if (n > 0) {
 				String[] keys = new String[n];
-				keys = cooks.values().toArray(keys);
+				keys = cookies.values().toArray(keys);
 				for (String key : keys) {
 					text += key + "\n";
 				}
@@ -205,6 +209,25 @@ public class HttpClient extends JPanel {
 		catch (Exception ex) { }
 		return text;
 	}
+	
+	String getHeader(String name) {
+		java.util.List<String> list = headers.get(name);
+		if ((list != null)  && (list.size() > 0)) return list.get(0);
+		return "";
+	}
+	
+	Charset getCharset() {
+		Charset charset = latin1;
+		String contentType = getHeader("Content-Type");
+		if (contentType.startsWith("text")) {
+			int k = contentType.indexOf("charset=");
+			if (k >= 0) {
+				String name = contentType.substring(k + 8).trim();
+				charset = Charset.forName(name);
+			}
+		}
+		return charset;
+	}		
 
 	//Get the text returned in the connection.
 	String displayContent(HttpURLConnection conn) {
@@ -212,14 +235,34 @@ public class HttpClient extends JPanel {
 		StringBuffer text = new StringBuffer("Content length: " + length + "\n");
 		try {
 			InputStream is = conn.getInputStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			int size = 256;
-			char[] buf = new char[size];
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			int size = 4096;
+			byte[] buf = new byte[size];
 			int len;
-			while ((len=isr.read(buf,0,size)) != -1) text.append(buf,0,len);
+			while ((len=is.read(buf,0,size)) != -1) baos.write(buf,0,len);
+			
+			String contentType = getHeader("Content-Type");
+			String contentEncoding = getHeader("Content-Encoding");
+			if (!contentEncoding.equals("gzip")) {
+				if (contentType.startsWith("text")) {
+					text.append(new String(baos.toByteArray(), getCharset()));
+				}
+				else text.append("non-text data\n");
+			}
+			else {
+				text.append("gzip:\n");
+				ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+				GZIPInputStream zipped = new GZIPInputStream(bais);
+				ByteArrayOutputStream unzipped = new ByteArrayOutputStream();
+				while ((len=zipped.read(buf,0,size)) != -1) unzipped.write(buf,0,len);
+				if (contentType.startsWith("text")) {
+					text.append(new String(unzipped.toByteArray(), getCharset()));
+				}
+				else text.append("non-text data\n");
+			}
 		}
 		catch (Exception e) {
-			text.append("Error reading the input stream\nException message: "
+			text.append("Error processing response content.\nException message: "
 											+ e.getMessage() + "\n\n");
 		}
 		return text.toString();
@@ -230,10 +273,8 @@ public class HttpClient extends JPanel {
 		public X509Certificate[] getAcceptedIssuers() {
 			return null;
 		}
-		public void checkClientTrusted(X509Certificate[] certs, String authType) {
-		}
-		public void checkServerTrusted(X509Certificate[] certs, String authType) {
-		}
+		public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+		public void checkServerTrusted(X509Certificate[] certs, String authType) { }
 	}
 
 	//All-verifying HostnameVerifier
