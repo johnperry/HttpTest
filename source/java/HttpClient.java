@@ -244,7 +244,7 @@ public class HttpClient extends JPanel {
 			String contentType = getHeader("Content-Type");
 			String contentEncoding = getHeader("Content-Encoding");
 			if (!contentEncoding.equals("gzip")) {
-				if (contentType.startsWith("text")) {
+				if (contentType.startsWith("text") || contentType.startsWith("application/json")) {
 					text.append(new String(baos.toByteArray(), getCharset()));
 				}
 				else text.append("non-text data\n");

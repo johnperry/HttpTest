@@ -58,7 +58,8 @@ public class HttpTest extends JFrame implements ChangeListener {
 		server = new HttpServer();
 		ipPane = new IPPane();
 		SysProps sysProps = new SysProps();
-		Instructions instructions = new Instructions();
+		EnvProps envProps = new EnvProps();
+ 		Instructions instructions = new Instructions();
 		proxy = new Proxy();
 		authorization = new Authorization();
 		message = new Message();
@@ -71,6 +72,7 @@ public class HttpTest extends JFrame implements ChangeListener {
 		tabbedPane.addTab("HTTP Server",server);
 		tabbedPane.addTab("IP Address",ipPane);
 		tabbedPane.addTab("SysProps",sysProps);
+		tabbedPane.addTab("EnvProps",envProps);
 		tabbedPane.addTab("Help",instructions);
 
 		main.add(tabbedPane, BorderLayout.CENTER);
