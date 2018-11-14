@@ -79,7 +79,7 @@ public class RowLayout implements LayoutManager2 {
 	 * Get a constraint object to span multiple columns.
 	 */
 	public static Integer span(int colspan) {
-		return new Integer( (colspan>0) ? colspan : 1 );
+		return Integer.valueOf( (colspan>0) ? colspan : 1 );
 	}
 
 	static boolean isCRLF(Component c) {

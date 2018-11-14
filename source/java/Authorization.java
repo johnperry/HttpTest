@@ -8,7 +8,7 @@
 package org.rsna.httptest;
 
 import java.awt.*;
-import java.util.*;
+//import java.util.*;
 import javax.swing.*;
 import javax.swing.BorderFactory;
 import javax.swing.border.*;
