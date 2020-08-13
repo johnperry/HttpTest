@@ -39,6 +39,7 @@ public class HttpClient extends JPanel {
 
 	static final Charset utf8 = Charset.forName("UTF-8");
 	static final Charset latin1 = Charset.forName("ISO-8859-1");
+	static Color bg = Color.getHSBColor(0.58f, 0.17f, 0.95f);
 
 	Header header;
 	JScrollPane scroller;
@@ -298,59 +299,58 @@ public class HttpClient extends JPanel {
 
 		public Header() {
 			super();
-			this.setLayout(new FlowLayout(FlowLayout.LEADING));
-			group = new ButtonGroup();
-
-			JPanel p = new JPanel(new RowLayout());
-			address = new JTextField(100);
-			address.setText("http://"+IPUtil.getIPAddress()+":5678");
-			address.addActionListener(this);
-			address.setFont(font);
-			p.add(new JLabel("URL:"));
-			p.add(address);
-			p.add(RowLayout.crlf());
-			body = new JTextField(100);
-			body.addActionListener(this);
-			body.setFont(font);
-			p.add(new JLabel("POST Body:"));
-			p.add(body);
-			p.add(RowLayout.crlf());
-			gzip = new JCheckBox("", false);
-			p.add(gzip);
-			p.add(new JLabel("Include gzip Accept-Encoding header"));
-			p.add(RowLayout.crlf());
-
-			connect = new JButton("Connect");
-			connect.addActionListener(this);
-			getButton = new JRadioButton();
+			this.setLayout(new RowLayout());
+			setBackground(bg);
+			add(RowLayout.crlf());
+			
+			//Method row
+			getButton = new RB("GET");
 			getButton.setSelected(true);
-			putButton = new JRadioButton();
-			postButton = new JRadioButton();
-			optionsButton = new JRadioButton();
+			putButton = new RB("PUT");
+			postButton = new RB("POST");
+			optionsButton = new RB("OPTIONS");
+			group = new ButtonGroup();
 			group.add(getButton);
 			group.add(putButton);
 			group.add(postButton);
 			group.add(optionsButton);
-
-			this.add(p);
-			this.add(Box.createHorizontalStrut(10));
-			this.add(connect);
-			this.add(Box.createHorizontalStrut(20));
-
-			JPanel methodPanel = new JPanel(new RowLayout());
-			methodPanel.add(new JLabel("GET:"));
-			methodPanel.add(getButton);
-			methodPanel.add(RowLayout.crlf());
-			methodPanel.add(new JLabel("PUT:"));
-			methodPanel.add(putButton);
-			methodPanel.add(RowLayout.crlf());
-			methodPanel.add(new JLabel("POST:"));
-			methodPanel.add(postButton);
-			methodPanel.add(RowLayout.crlf());
-			methodPanel.add(new JLabel("OPTIONS:"));
-			methodPanel.add(optionsButton);
-			methodPanel.add(RowLayout.crlf());
-			this.add(methodPanel);
+			connect = new JButton("Connect");
+			add(connect);
+			connect.addActionListener(this);
+			JPanel p = new JPanel(new RowLayout());
+			p.setBackground(bg);
+			p.add(getButton);
+			p.add(putButton);
+			p.add(postButton);
+			p.add(optionsButton);
+			p.add(RowLayout.crlf());
+			add(p);
+			add(RowLayout.crlf());
+			
+			//URL row
+			address = new JTextField(100);
+			address.setText("http://"+IPUtil.getIPAddress()+":5678");
+			address.addActionListener(this);
+			address.setFont(font);
+			add(new LBL("URL:", 1.0f));
+			add(address);
+			add(RowLayout.crlf());
+			
+			//POST body row
+			body = new JTextField(100);
+			body.addActionListener(this);
+			body.setFont(font);
+			add(new LBL("POST Body:", 1.0f));
+			add(body);
+			add(RowLayout.crlf());
+			
+			//GZIP row
+			gzip = new JCheckBox("", false);
+			gzip.setAlignmentX(1.0f);
+			gzip.setBackground(bg);
+			add(gzip);
+			add(new JLabel("Include gzip Accept-Encoding header"));
+			add(RowLayout.crlf());
 		}
 
 		public String getMethod() {
@@ -374,6 +374,20 @@ public class HttpClient extends JPanel {
 				HttpTest.message.setText(" ");
 				connect(addr);
 			}
+		}
+	}
+	
+	class RB extends JRadioButton {
+		public RB(String s) {
+			super(s);
+			setBackground(bg);
+		}
+	}
+	
+	class LBL extends JLabel {
+		public LBL(String s, float x) {
+			super(s);
+			setAlignmentX(x);
 		}
 	}
 
